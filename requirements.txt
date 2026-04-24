@@ -1,0 +1,6 @@
+mcp
+SQLAlchemy
+python-dotenv
+pandas
+openpyxl
+reportlab
