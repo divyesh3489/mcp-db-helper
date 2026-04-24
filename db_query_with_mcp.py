@@ -17,11 +17,12 @@ load_dotenv()
 mcp = FastMCP(
     "smart-db-mcp",
     json_response=True,
-    host=os.getenv("MCP_HOST", "127.0.0.1"),
-    port=int(os.getenv("MCP_PORT", "8000")),
+    host=os.getenv("MCP_HOST", "0.0.0.0"),
+    port=int(os.getenv("MCP_PORT", os.getenv("PORT", "10000"))),
 )
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(os.getenv("DB_URL"))
+DEFAULT_SERVER_URL = "https://mcp-db-helper.onrender.com"
 
 
 def generate_csv(results:list[dict],filename:str):
@@ -126,7 +127,7 @@ def genrate_csv_or_xlsx_or_pdf(results:list[dict],filename:str,format:str = "csv
     else:
         return "Invalid format"
 
-    server_url = (os.getenv("MCP_SERVER_URL") or "").strip().rstrip("/")
+    server_url = (os.getenv("MCP_SERVER_URL") or DEFAULT_SERVER_URL).strip().rstrip("/")
     if not server_url:
         return "File generated, but MCP_SERVER_URL is not configured."
     if not server_url.startswith(("http://", "https://")):
@@ -134,6 +135,10 @@ def genrate_csv_or_xlsx_or_pdf(results:list[dict],filename:str,format:str = "csv
 
     link = f"{server_url}/{file_ext}/{filename}.{file_ext}"
     return link
+
+@mcp.custom_route("/", methods=["GET", "HEAD"])
+async def root(request: Request):
+    return PlainTextResponse("OK", status_code=200)
 
 @mcp.tool("execute_query", description="Execute a safe SQL query and return JSON or PDF link")
 def execute_query(query:str):
